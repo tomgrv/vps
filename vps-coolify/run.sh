@@ -7,6 +7,9 @@ zz-use zz-colors zz-log zz-install zz-step
 # shellcheck disable=SC1091
 . zz-colors
 
+# Present only when this step's installer put Docker on the host: down removes Docker only then.
+DOCKER_MARKER=/var/lib/vps-coolify-installed-docker
+
 COOLIFY_INSTALL_URL=https://cdn.coollabs.io/coolify/install.sh
 
 # The app and its proxy must both exist: an app without proxy is a broken install, which re-running the installer repairs.
@@ -39,6 +42,7 @@ up() {
         [ -z "${SYSTEM_COOLIFY_DOCKER_ADDRESS_POOL_BASE:-}" ] || export DOCKER_ADDRESS_POOL_BASE="$SYSTEM_COOLIFY_DOCKER_ADDRESS_POOL_BASE"
         zz-log i "Running the Coolify installer; it installs Docker if needed..."
         # The official installer needs bash.
+        command -v docker >/dev/null 2>&1 || touch "$DOCKER_MARKER"
         zz-install -u "$COOLIFY_INSTALL_URL" -x bash coolify
         is_coolify_installed || { zz-log e "The Coolify installer finished but the coolify containers are not there." && exit 1; }
     fi
@@ -63,12 +67,13 @@ down() {
         zz-log w "Docker not found; nothing to remove besides /data/coolify."
     fi
     rm -rf /data/coolify
-    if command -v docker >/dev/null 2>&1; then
+    if [ -f "$DOCKER_MARKER" ] && command -v docker >/dev/null 2>&1; then
         zz-log i "Removing Docker (the Coolify installer installed it)..."
         systemctl disable --now docker docker.socket containerd 2>/dev/null || true
         apt-mark unhold docker-ce docker-ce-cli docker-ce-rootless-extras 2>/dev/null || true
         zz-install -r docker-ce docker-ce-cli docker-ce-rootless-extras docker-buildx-plugin docker-compose-plugin containerd.io docker.io || true
     fi
+    rm -f "$DOCKER_MARKER"
     zz-log s "Coolify removed."
 }
 

@@ -212,12 +212,16 @@ install_private_guard() {
 # usage: vps-private-ports-guard add|del <internal-interface|-> <port>...
 action="$1" private="$2"
 shift 2
-iface="$(ip -4 route show default | awk '{print $5; exit}')"
-[ -n "$iface" ] && [ "$iface" != "$private" ] || exit 0
-for port in "$@"; do
-  rule="-i $iface -p tcp -m conntrack --ctstate DNAT --ctorigdstport $port -j DROP"
-  while iptables -D FORWARD $rule 2>/dev/null; do :; done
-  if [ "$action" = add ]; then iptables -I FORWARD 1 $rule; fi
+for fam in 4 6; do
+  if [ "$fam" = 4 ]; then ipt=iptables; else ipt=ip6tables; fi
+  command -v "$ipt" >/dev/null 2>&1 || continue
+  iface="$(ip -"$fam" route show default | awk '{print $5; exit}')"
+  [ -n "$iface" ] && [ "$iface" != "$private" ] || continue
+  for port in "$@"; do
+    rule="-i $iface -p tcp -m conntrack --ctstate DNAT --ctorigdstport $port -j DROP"
+    while $ipt -D FORWARD $rule 2>/dev/null; do :; done
+    if [ "$action" = add ]; then $ipt -I FORWARD 1 $rule; fi
+  done
 done
 GUARD
     chmod 755 "$GUARD_BIN"

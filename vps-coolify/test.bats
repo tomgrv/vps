@@ -82,3 +82,9 @@ DIR="$REPO_ROOT/vps-coolify"
     grep -q 'ROOT_USER_PASSWORD="\$SYSTEM_COOLIFY_ROOT_PASSWORD' "$DIR/run.sh"
     grep -q 'DOCKER_ADDRESS_POOL_BASE="\$SYSTEM_COOLIFY_DOCKER_ADDRESS_POOL_BASE' "$DIR/run.sh"
 }
+
+@test "down removes Docker only when this step's installer put it there (marker file)" {
+    grep -q '^DOCKER_MARKER=' "$DIR/run.sh"
+    grep -q 'touch "\$DOCKER_MARKER"' "$DIR/run.sh"
+    grep -q '\[ -f "\$DOCKER_MARKER" \]' "$DIR/run.sh"
+}

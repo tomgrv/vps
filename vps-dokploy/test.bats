@@ -81,3 +81,9 @@ DIR="$REPO_ROOT/vps-dokploy"
     grep -q 'export DOKPLOY_VERSION="\${SYSTEM_DOKPLOY_VERSION' "$DIR/run.sh"
     grep -q 'DOCKER_SWARM_INIT_ARGS="\${SYSTEM_DOKPLOY_DOCKER_SWARM_INIT_ARGS' "$DIR/run.sh"
 }
+
+@test "down removes Docker only when this step's installer put it there (marker file)" {
+    grep -q '^DOCKER_MARKER=' "$DIR/run.sh"
+    grep -q 'touch "\$DOCKER_MARKER"' "$DIR/run.sh"
+    grep -q '\[ -f "\$DOCKER_MARKER" \]' "$DIR/run.sh"
+}

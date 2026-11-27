@@ -22,7 +22,7 @@ sudo zz-setup ./ -o vps-coolify         # without vps-setup, from a checkout
 ## Access and security
 
 - **Admin UI** on port `8000`, with realtime on `6001` and the terminal on `6002`, all declared `private`: `vps-security` opens them on the internal interface only, and the final summary prints `http://<internal-ip>:8000`. Set `SYSTEM_COOLIFY_ROOT_EMAIL` and `SYSTEM_COOLIFY_ROOT_PASSWORD` **together** (the installer skips a half-set pair) to predefine the admin; otherwise the first visit creates the admin account, so join the internal network before opening it.
-- **Docker bypasses ufw.** `vps-security`'s `vps-private-ports-guard.service` drops DNAT-ed connections to every `private` port on the default-route interface, and `up` re-applies it once Docker runs. Check from outside the internal network: `curl -m 5 http://<public-ip>:8000` must time out. It needs `vps-security` (on by default). IPv4 only.
+- **Docker bypasses ufw.** `vps-security`'s `vps-private-ports-guard.service` drops DNAT-ed connections to every `private` port on the default-route interface, and `up` re-applies it once Docker runs. Check from outside the internal network: `curl -m 5 http://<public-ip>:8000` must time out. It needs `vps-security` (on by default). IPv4 and IPv6 (when the host has an IPv6 default route).
 - **Apps** deployed through Coolify are served by its proxy on `80`/`443` (public). Any other port an app publishes is NAT-ed past ufw too: publish only what you mean to expose.
 
 The ports follow [Coolify's firewall page](https://coolify.io/docs/core/infrastructure/servers/firewall): `8000`/`6001`/`6002` are only needed for direct-IP access, so once the dashboard works through a domain on the proxy they can stay private. That page warns Docker bypasses ufw; the guard above matches the original destination port, not a container IP, which is the form it recommends. Remote servers attached to this Coolify only need `22`, `80` and `443`.
@@ -50,7 +50,7 @@ Passed to the upstream installer under its own names.
 
 ## Removing (`down`)
 
-`down` removes Coolify **and everything it deployed**: the managed containers (found by label, and by attachment to the `coolify` network), the `coolify*` volumes, the `coolify` network and `/data/coolify`. Docker itself is removed too (its installer put it there).
+`down` removes Coolify **and everything it deployed**: the managed containers (found by label, and by attachment to the `coolify` network), the `coolify*` volumes, the `coolify` network and `/data/coolify`. Docker itself is removed only if this step's installer put it there (a marker file records it); a host that already had Docker keeps it.
 
 ```bash
 sudo vps-setup --down-vps-coolify
