@@ -25,6 +25,8 @@ sudo zz-setup ./ -o vps-coolify         # without vps-setup, from a checkout
 - **Docker bypasses ufw.** `vps-security`'s `vps-private-ports-guard.service` drops DNAT-ed connections to every `private` port on the default-route interface, and `up` re-applies it once Docker runs. Check from outside the internal network: `curl -m 5 http://<public-ip>:8000` must time out. It needs `vps-security` (on by default). IPv4 only.
 - **Apps** deployed through Coolify are served by its proxy on `80`/`443` (public). Any other port an app publishes is NAT-ed past ufw too: publish only what you mean to expose.
 
+The ports follow [Coolify's firewall page](https://coolify.io/docs/core/infrastructure/servers/firewall): `8000`/`6001`/`6002` are only needed for direct-IP access, so once the dashboard works through a domain on the proxy they can stay private. That page warns Docker bypasses ufw; the guard above matches the original destination port, not a container IP, which is the form it recommends. Remote servers attached to this Coolify only need `22`, `80` and `443`.
+
 ## Environment variables
 
 Passed to the upstream installer under its own names.
