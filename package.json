@@ -163,6 +163,7 @@
     "svc-k3s",
     "svc-tailscale",
     "vps-access",
+    "vps-coolify",
     "vps-dokploy",
     "vps-network",
     "vps-security",

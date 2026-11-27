@@ -87,7 +87,7 @@ shift; echo "$*"
 ' >"$stubs/zz-log"
     : >"$stubs/zz-colors"
     chmod +x "$stubs"/zz-use "$stubs"/zz-log
-    for step in system dokploy cloudflare coder; do
+    for step in system dokploy coolify cloudflare coder; do
         run_summary "$step" "$stubs"
         [ "$status" -eq 0 ]
         [ -z "$output" ]

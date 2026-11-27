@@ -1,0 +1,83 @@
+{
+  "name": "@tomgrv/vps-coolify",
+  "version": "4.10.0",
+  "description": "Coolify install (self-hosted PaaS on Docker + Traefik)",
+  "bin": {
+    "vps-coolify": "run.sh"
+  },
+  "private": true,
+  "scripts": {
+    "test": "bats test.bats"
+  },
+  "engines": {
+    "zz-setup": "*"
+  },
+  "config": {
+    "conflicts": [
+      "svc-k3s",
+      "vps-dokploy"
+    ],
+    "default": false,
+    "inputs": {
+      "SYSTEM_COOLIFY_ROOT_USERNAME": {
+        "description": "Admin username created by the installer (empty = create it at first visit)",
+        "required": false,
+        "default": ""
+      },
+      "SYSTEM_COOLIFY_ROOT_EMAIL": {
+        "description": "Admin email created by the installer (empty = create it at first visit)",
+        "required": false,
+        "default": ""
+      },
+      "SYSTEM_COOLIFY_ROOT_PASSWORD": {
+        "description": "Admin password created by the installer (empty = create it at first visit)",
+        "required": false,
+        "default": ""
+      },
+      "SYSTEM_COOLIFY_DOCKER_ADDRESS_POOL_BASE": {
+        "description": "Docker address pool base (e.g. 172.20.0.0/16) to avoid clashing with a VPC (empty = installer default)",
+        "required": false,
+        "default": ""
+      }
+    },
+    "order": 6.5,
+    "outputs": {},
+    "ports": [
+      {
+        "name": "system_coolify_http",
+        "port": 80,
+        "access": "public",
+        "note": "Coolify proxy HTTP, also required for the Lets Encrypt HTTP-01 challenge (fixed by the installer)"
+      },
+      {
+        "name": "system_coolify_https",
+        "port": 443,
+        "access": "public",
+        "note": "Coolify proxy HTTPS (fixed by the installer)"
+      },
+      {
+        "name": "system_coolify_ui",
+        "port": 8000,
+        "access": "private",
+        "note": "Coolify admin UI (fixed by the installer)"
+      },
+      {
+        "name": "system_coolify_realtime",
+        "port": 6001,
+        "access": "private",
+        "note": "Coolify realtime (websocket) service the UI connects to (fixed by the installer)"
+      },
+      {
+        "name": "system_coolify_terminal",
+        "port": 6002,
+        "access": "private",
+        "note": "Coolify in-browser terminal (fixed by the installer)"
+      }
+    ],
+    "requires": {
+      "root": true,
+      "os": "ubuntu"
+    },
+    "summary": true
+  }
+}

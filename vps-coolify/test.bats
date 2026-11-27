@@ -1,0 +1,84 @@
+#!/usr/bin/env bats
+# Static checks for vps-coolify/run.sh and package.json - a live install
+# needs a real root Ubuntu box with Docker, so this stops at syntax + shape
+# (see this folder's README's "Tests" section, and ../tests/ for repo-wide checks).
+
+REPO_ROOT="$(cd "$(dirname "${BATS_TEST_FILENAME}")/.." && pwd)"
+DIR="$REPO_ROOT/vps-coolify"
+
+@test "run.sh parses as POSIX sh" {
+    run dash -n "$DIR/run.sh"
+    [ "$status" -eq 0 ]
+}
+
+@test "run.sh sources nothing but zz-colors and calls the vps scripts instead" {
+    grep -q '^\. zz-colors$' "$DIR/run.sh"
+    [ -z "$(grep -E '^\s*(\.|source) ' "$DIR/run.sh" | grep -Ev '\. zz-(colors|step)$')" ]
+}
+
+@test "run.sh does not bootstrap zz-use itself (assumes setup.sh already ran)" {
+    ! grep -q 'command -v zz-use' "$DIR/run.sh"
+    ! grep -q 'curl -fsSL.*setup\.sh.*| sh$' "$DIR/run.sh"
+}
+
+@test "defines up() and dispatches its action" {
+    grep -q '^up() {' "$DIR/run.sh"
+    grep -q '^\. zz-step$' "$DIR/run.sh"
+    ! grep -q 'dispatch_action' "$DIR/run.sh"
+}
+
+@test "defines down()" {
+    grep -q '^down() {' "$DIR/run.sh"
+}
+
+@test "refuses to run next to k3s and Dokploy (both own ports 80/443)" {
+    grep -q 'command -v k3s' "$DIR/run.sh"
+    grep -q '/etc/dokploy' "$DIR/run.sh"
+}
+
+@test "the installer is fetched with zz-install -u -x, not piped from curl" {
+    grep -q 'zz-install -u "\$COOLIFY_INSTALL_URL" -x bash' "$DIR/run.sh"
+    ! grep -qE 'curl[^#]*\| *(ba)?sh' "$DIR/run.sh"
+}
+
+
+@test "the admin port is guarded by vps-security's shared FORWARD guard, not a copy of it" {
+    grep -q '^    vps-network reapply-guard$' "$DIR/run.sh"
+    ! grep -qE '^[[:space:]]*iptables ' "$DIR/run.sh"
+}
+
+@test "package.json bin entry matches the folder name" {
+    run node -e "const p = require('$DIR/package.json'); process.exit(p.bin['vps-coolify'] === 'run.sh' ? 0 : 1)"
+    [ "$status" -eq 0 ]
+}
+
+@test "package.json declares vps.order as a number" {
+    run node -e "const p = require('$DIR/package.json'); process.exit(typeof p.config.order === 'number' ? 0 : 1)"
+    [ "$status" -eq 0 ]
+}
+
+
+@test "package.json declares the k3s and Dokploy conflicts, so zz-setup aborts before any step runs" {
+    run node -e "const p = require('$DIR/package.json'); process.exit(['svc-k3s','vps-dokploy'].every(c => p.config.conflicts.includes(c)) ? 0 : 1)"
+    [ "$status" -eq 0 ]
+}
+
+@test "package.json is opt-in (default false), since a default run installs k3s on the same ports" {
+    run node -e "const p = require('$DIR/package.json'); process.exit(p.config.default === false ? 0 : 1)"
+    [ "$status" -eq 0 ]
+}
+
+@test "package.json keeps the admin UI private and the ingress public" {
+    run node -e "
+        const ports = Object.fromEntries(require('$DIR/package.json').config.ports.map(p => [p.name, p]));
+        process.exit(ports.system_coolify_ui.access === 'private' && ports.system_coolify_ui.port === 8000
+            && ports.system_coolify_http.access === 'public' && ports.system_coolify_https.access === 'public' ? 0 : 1)"
+    [ "$status" -eq 0 ]
+}
+
+@test "the installer gets its own variable names (ROOT_USERNAME, ROOT_USER_EMAIL, ROOT_USER_PASSWORD, DOCKER_ADDRESS_POOL_BASE) from the SYSTEM_ inputs" {
+    grep -q 'ROOT_USERNAME="\${SYSTEM_COOLIFY_ROOT_USERNAME' "$DIR/run.sh"
+    grep -q 'ROOT_USER_EMAIL="\${SYSTEM_COOLIFY_ROOT_EMAIL' "$DIR/run.sh"
+    grep -q 'ROOT_USER_PASSWORD="\${SYSTEM_COOLIFY_ROOT_PASSWORD' "$DIR/run.sh"
+    grep -q 'DOCKER_ADDRESS_POOL_BASE="\${SYSTEM_COOLIFY_DOCKER_ADDRESS_POOL_BASE' "$DIR/run.sh"
+}
