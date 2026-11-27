@@ -87,7 +87,7 @@ shift; echo "$*"
 ' >"$stubs/zz-log"
     : >"$stubs/zz-colors"
     chmod +x "$stubs"/zz-use "$stubs"/zz-log
-    for step in system dokploy cloudflare coder; do
+    for step in system dokploy coolify cloudflare coder; do
         run_summary "$step" "$stubs"
         [ "$status" -eq 0 ]
         [ -z "$output" ]
@@ -159,4 +159,12 @@ shift; echo "$*"
         grep -q 'name: vps-lib' "$c/Chart.yaml"
         grep -q 'repository: file://../_lib' "$c/Chart.yaml"
     done
+}
+
+@test "svc-k3s, vps-dokploy and vps-coolify are mutually exclusive (each declares the other two)" {
+    run node -e "
+        const ids = ['svc-k3s', 'vps-dokploy', 'vps-coolify'];
+        const ok = ids.every(a => ids.filter(b => b !== a).every(b => (require('$REPO_ROOT/' + a + '/package.json').config.conflicts || []).includes(b)));
+        process.exit(ok ? 0 : 1)"
+    [ "$status" -eq 0 ]
 }

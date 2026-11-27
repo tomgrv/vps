@@ -61,6 +61,7 @@ Naming: `vps-*` are system steps (their variables are `SYSTEM_<VAR>`), `svc-*` s
 | [`svc-k3s`](svc-k3s/README.md)               | k3s, kubectl, Helm and Traefik as the public HTTP/HTTPS ingress       | on      |
 | [`app-rancher`](app-rancher/README.md)       | cert-manager and Rancher                                              | on      |
 | [`vps-dokploy`](vps-dokploy/README.md)       | Dokploy, an alternative to the k3s stack                              | opt-in  |
+| [`vps-coolify`](vps-coolify/README.md)       | Coolify, another alternative to the k3s stack                         | opt-in  |
 | [`app-coder`](app-coder/README.md)           | Coder cloud development environments (needs Rancher)                  | opt-in  |
 | [`app-argocd`](app-argocd/README.md)         | ArgoCD, GitOps continuous delivery (see [apps](#apps))                | opt-in  |
 | [`app-cognee`](app-cognee/README.md)         | Cognee, AI memory and knowledge graph                                 | opt-in  |
@@ -81,7 +82,7 @@ sudo vps-setup --skip-svc-k3s --skip-app-rancher --with-vps-dokploy   # Dokploy 
 
 A step's dependencies are enabled for you (`--only-app-argocd` also runs
 `svc-k3s`). Tailscale and Cloudflare cannot run together, nor
-can k3s and Dokploy: `vps-setup` stops before running anything if you select both.
+can k3s, Dokploy and Coolify (any two): `vps-setup` stops before running anything if you select both.
 
 ## Remove a step
 
@@ -93,7 +94,7 @@ sudo vps-setup --down-svc-k3s --down-app-rancher   # the whole cluster (apps go 
 A step is refused while something that depends on it is still enabled; bring
 the dependents down in the same run, or add `--force-down`. Removing `svc-k3s`
 takes Rancher and every app installed from the catalog with it; removing
-`vps-dokploy` takes every app it deployed. Each step's README lists what its
+`vps-dokploy` or `vps-coolify` takes every app it deployed. Each step's README lists what its
 `down` removes and keeps.
 
 ## Inputs
@@ -141,7 +142,7 @@ run and wins over `/etc/vps.env`.
 ## What is reachable
 
 From the internet: SSH, and HTTP/HTTPS through Traefik. Cockpit, the
-Traefik dashboard, the Dokploy UI and the k3s API only answer on your internal
+Traefik dashboard, the Dokploy and Coolify UIs and the k3s API only answer on your internal
 network, so join the same tailnet first. To check from outside,
 `curl -m 5 http://<public-ip>:9083` must time out.
 
@@ -165,6 +166,7 @@ flowchart LR
             cockpit["Cockpit<br/>9080 / 9083"]
             dash["Traefik dashboard<br/>8088"]
             dokploy["Dokploy UI<br/>3000"]
+            coolify["Coolify UI<br/>8000 / 6001 / 6002"]
             registry["Image registry<br/>5000"]
         end
         subgraph svc["Services (public or internal, one each)"]

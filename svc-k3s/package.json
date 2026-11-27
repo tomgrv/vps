@@ -66,6 +66,10 @@
       "root": true,
       "os": "ubuntu"
     },
-    "summary": true
+    "summary": true,
+    "conflicts": [
+      "vps-dokploy",
+      "vps-coolify"
+    ]
   }
 }

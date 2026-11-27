@@ -1,0 +1,21 @@
+# @format
+
+name: Test steps
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  bats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install bats and jq
+        run: sudo apt-get update && sudo apt-get install -y bats jq
+      - name: Bootstrap zz-use (the steps call it)
+        run: curl -fsSL https://raw.githubusercontent.com/tomgrv/scripts/main/setup.sh | sh
+      - name: Run bats suites
+        run: bats --recursive .

@@ -22,7 +22,7 @@ sudo zz-setup ./ -o vps-dokploy         # without vps-setup, from a checkout
 ## Access and security
 
 - **Admin UI** on port `3000`, declared `private`: `vps-security` opens it on the internal interface only, and the final summary prints `http://<internal-ip>:3000`. The first visit creates the admin account, so join the internal network before opening it.
-- **Docker bypasses ufw.** Published container ports are NAT-ed ahead of ufw's rules, so a ufw rule alone would leave `3000` open to the internet. `vps-security`'s `vps-private-ports-guard.service` drops DNAT-ed connections to every `private` port (this one included) on the default-route interface, and `up` re-applies it once Docker is running. Check it from outside the internal network: `curl -m 5 http://<public-ip>:3000` must time out. It therefore needs `vps-security` (on by default); without it nothing here is private. IPv4 only.
+- **Docker bypasses ufw.** Published container ports are NAT-ed ahead of ufw's rules, so a ufw rule alone would leave `3000` open to the internet. `vps-security`'s `vps-private-ports-guard.service` drops DNAT-ed connections to every `private` port (this one included) on the default-route interface, and `up` re-applies it once Docker is running. Check it from outside the internal network: `curl -m 5 http://<public-ip>:3000` must time out. It therefore needs `vps-security` (on by default); without it nothing here is private. IPv4 and IPv6 (when the host has an IPv6 default route).
 - **Apps** deployed through Dokploy are served by its own Traefik on `80`/`443` (public). Any other port an app publishes is NAT-ed past ufw too: publish only what you mean to expose, or front it with Dokploy's domains.
 - `/etc/dokploy` is created `777` by the upstream installer and left as is.
 
@@ -50,7 +50,7 @@ The ports (`80`/`443` public, `3000` private) are fixed by the installer; overri
 
 ## Removing (`down`)
 
-`down` removes Dokploy **and everything it deployed**: the Traefik container, the swarm services, the `dokploy*` volumes, the swarm itself and `/etc/dokploy`. Docker itself is removed too (its installer put it there). The old `vps-dockermanager` Cockpit plugin is gone; `cockpit-packagekit` and `cockpit-files` now come with `svc-cockpit`.
+`down` removes Dokploy **and everything it deployed**: the Traefik container, the swarm services, the `dokploy*` volumes, the swarm itself and `/etc/dokploy`. Docker itself is removed only if this step's installer put it there (a marker file records it); a host that already had Docker keeps it. The old `vps-dockermanager` Cockpit plugin is gone; `cockpit-packagekit` and `cockpit-files` now come with `svc-cockpit`.
 
 ```bash
 sudo vps-setup --down-vps-dokploy

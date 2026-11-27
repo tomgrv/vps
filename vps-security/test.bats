@@ -57,11 +57,14 @@ DIR="$REPO_ROOT/vps-security"
 guard_setup() {
     sed -n "/<<'GUARD'/,/^GUARD$/p" "$DIR/run.sh" | sed '1d;$d' >"$BATS_TEST_TMPDIR/guard.sh"
     mkdir -p "$BATS_TEST_TMPDIR/bin"
-    printf '#!/bin/sh\necho "default via 10.0.0.1 dev eth0"\n' >"$BATS_TEST_TMPDIR/bin/ip"
+    # IPv6 has a default route only when V6 is set
+    printf '#!/bin/sh\ncase "$1" in -6) [ -z "$V6" ] || echo "default via fe80::1 dev eth0" ;; *) echo "default via 10.0.0.1 dev eth0" ;; esac\n' >"$BATS_TEST_TMPDIR/bin/ip"
     printf '#!/bin/sh\necho "$*" >>"$IPT_LOG"\ncase "$1" in -D) exit 1 ;; esac\n' >"$BATS_TEST_TMPDIR/bin/iptables"
+    printf '#!/bin/sh\necho "$*" >>"$IPT6_LOG"\ncase "$1" in -D) exit 1 ;; esac\n' >"$BATS_TEST_TMPDIR/bin/ip6tables"
     chmod +x "$BATS_TEST_TMPDIR"/bin/*
-    export IPT_LOG="$BATS_TEST_TMPDIR/ipt.log"
+    export IPT_LOG="$BATS_TEST_TMPDIR/ipt.log" IPT6_LOG="$BATS_TEST_TMPDIR/ipt6.log"
     : >"$IPT_LOG"
+    : >"$IPT6_LOG"
 }
 
 @test "the private-ports guard script parses as sh" {
@@ -77,6 +80,15 @@ guard_setup() {
     [ "$status" -eq 0 ]
     grep -qx -- '-I FORWARD 1 -i eth0 -p tcp -m conntrack --ctstate DNAT --ctorigdstport 7080 -j DROP' "$IPT_LOG"
     grep -qx -- '-I FORWARD 1 -i eth0 -p tcp -m conntrack --ctstate DNAT --ctorigdstport 3000 -j DROP' "$IPT_LOG"
+}
+
+@test "the guard also drops DNAT-ed IPv6 connections, only when the host has an IPv6 default route" {
+    guard_setup
+    run env PATH="$BATS_TEST_TMPDIR/bin:$PATH" sh "$BATS_TEST_TMPDIR/guard.sh" add tailscale0 8000
+    [ ! -s "$IPT6_LOG" ]
+    run env V6=1 PATH="$BATS_TEST_TMPDIR/bin:$PATH" sh "$BATS_TEST_TMPDIR/guard.sh" add tailscale0 8000
+    [ "$status" -eq 0 ]
+    grep -qx -- '-I FORWARD 1 -i eth0 -p tcp -m conntrack --ctstate DNAT --ctorigdstport 8000 -j DROP' "$IPT6_LOG"
 }
 
 @test "the guard re-inserts instead of stacking, does nothing when the internal network is the default route, and deletes on del" {

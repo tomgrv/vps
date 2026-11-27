@@ -7,6 +7,9 @@ zz-use zz-colors zz-log zz-install zz-step
 # shellcheck disable=SC1091
 . zz-colors
 
+# Present only when this step's installer put Docker on the host: down removes Docker only then.
+DOCKER_MARKER=/var/lib/vps-dokploy-installed-docker
+
 DOKPLOY_INSTALL_URL=https://dokploy.com/install.sh
 
 # Both halves must exist: a service without Traefik is a broken install, which
@@ -43,6 +46,7 @@ up() {
         export DOKPLOY_VERSION="${SYSTEM_DOKPLOY_VERSION:-}" DOCKER_SWARM_INIT_ARGS="${SYSTEM_DOKPLOY_DOCKER_SWARM_INIT_ARGS:-}"
         zz-log i "Running the Dokploy installer (advertise address ${ADVERTISE_ADDR}); it installs Docker if needed..."
         # The official installer needs bash.
+        command -v docker >/dev/null 2>&1 || touch "$DOCKER_MARKER"
         zz-install -u "$DOKPLOY_INSTALL_URL" -x bash dokploy
         is_dokploy_installed || { zz-log e "The Dokploy installer finished but the dokploy service/Traefik are not there." && exit 1; }
     fi
@@ -65,12 +69,13 @@ down() {
         zz-log w "Docker not found; nothing to remove besides /etc/dokploy."
     fi
     rm -rf /etc/dokploy
-    if command -v docker >/dev/null 2>&1; then
+    if [ -f "$DOCKER_MARKER" ] && command -v docker >/dev/null 2>&1; then
         zz-log i "Removing Docker (the Dokploy installer installed it)..."
         systemctl disable --now docker docker.socket containerd 2>/dev/null || true
         apt-mark unhold docker-ce docker-ce-cli docker-ce-rootless-extras 2>/dev/null || true
         zz-install -r docker-ce docker-ce-cli docker-ce-rootless-extras docker-buildx-plugin docker-compose-plugin containerd.io docker.io || true
     fi
+    rm -f "$DOCKER_MARKER"
     zz-log s "Dokploy removed."
 }
 

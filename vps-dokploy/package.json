@@ -14,7 +14,8 @@
   },
   "config": {
     "conflicts": [
-      "svc-k3s"
+      "svc-k3s",
+      "vps-coolify"
     ],
     "default": false,
     "inputs": {
