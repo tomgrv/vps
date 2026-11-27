@@ -32,10 +32,11 @@ up() {
             zz-log e "Dokploy is installed and its Traefik owns ports 80/443, which Coolify's proxy needs too." \
                 "Run one PaaS: sudo vps-setup --down-vps-dokploy --with-vps-coolify" && exit 1
         fi
-        # Upstream variable names: the installer reads them from its environment.
-        export ROOT_USERNAME="${SYSTEM_COOLIFY_ROOT_USERNAME:-}" ROOT_USER_EMAIL="${SYSTEM_COOLIFY_ROOT_EMAIL:-}"
-        export ROOT_USER_PASSWORD="${SYSTEM_COOLIFY_ROOT_PASSWORD:-}"
-        export DOCKER_ADDRESS_POOL_BASE="${SYSTEM_COOLIFY_DOCKER_ADDRESS_POOL_BASE:-}"
+        # Upstream variable names; set only when given, since the installer warns on a half-set root user.
+        [ -z "${SYSTEM_COOLIFY_ROOT_USERNAME:-}" ] || export ROOT_USERNAME="$SYSTEM_COOLIFY_ROOT_USERNAME"
+        [ -z "${SYSTEM_COOLIFY_ROOT_EMAIL:-}" ] || export ROOT_USER_EMAIL="$SYSTEM_COOLIFY_ROOT_EMAIL"
+        [ -z "${SYSTEM_COOLIFY_ROOT_PASSWORD:-}" ] || export ROOT_USER_PASSWORD="$SYSTEM_COOLIFY_ROOT_PASSWORD"
+        [ -z "${SYSTEM_COOLIFY_DOCKER_ADDRESS_POOL_BASE:-}" ] || export DOCKER_ADDRESS_POOL_BASE="$SYSTEM_COOLIFY_DOCKER_ADDRESS_POOL_BASE"
         zz-log i "Running the Coolify installer; it installs Docker if needed..."
         # The official installer needs bash.
         zz-install -u "$COOLIFY_INSTALL_URL" -x bash coolify
