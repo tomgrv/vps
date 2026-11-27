@@ -160,3 +160,11 @@ shift; echo "$*"
         grep -q 'repository: file://../_lib' "$c/Chart.yaml"
     done
 }
+
+@test "svc-k3s, vps-dokploy and vps-coolify are mutually exclusive (each declares the other two)" {
+    run node -e "
+        const ids = ['svc-k3s', 'vps-dokploy', 'vps-coolify'];
+        const ok = ids.every(a => ids.filter(b => b !== a).every(b => (require('$REPO_ROOT/' + a + '/package.json').config.conflicts || []).includes(b)));
+        process.exit(ok ? 0 : 1)"
+    [ "$status" -eq 0 ]
+}
