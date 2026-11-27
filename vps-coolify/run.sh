@@ -53,6 +53,8 @@ down() {
         zz-log i "Removing Coolify and the applications it deployed..."
         # Everything Coolify deploys carries its label; remove those first, then its own stack.
         docker ps -aq --filter label=coolify.managed=true | xargs -r docker rm -f 2>/dev/null || true
+        # Fallback if the label is missing: anything still attached to Coolify's network.
+        docker network inspect coolify --format '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
         docker container rm -f coolify coolify-db coolify-redis coolify-realtime coolify-proxy coolify-sentinel 2>/dev/null || true
         # A kept db volume would not match the password a reinstall generates.
         docker volume ls -q --filter name=coolify | xargs -r docker volume rm -f 2>/dev/null || true

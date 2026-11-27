@@ -166,6 +166,7 @@ flowchart LR
             cockpit["Cockpit<br/>9080 / 9083"]
             dash["Traefik dashboard<br/>8088"]
             dokploy["Dokploy UI<br/>3000"]
+            coolify["Coolify UI<br/>8000 / 6001 / 6002"]
             registry["Image registry<br/>5000"]
         end
         subgraph svc["Services (public or internal, one each)"]

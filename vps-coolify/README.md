@@ -48,7 +48,7 @@ Passed to the upstream installer under its own names.
 
 ## Removing (`down`)
 
-`down` removes Coolify **and everything it deployed**: the managed containers, the `coolify*` volumes, the `coolify` network and `/data/coolify`. Docker itself is removed too (its installer put it there).
+`down` removes Coolify **and everything it deployed**: the managed containers (found by label, and by attachment to the `coolify` network), the `coolify*` volumes, the `coolify` network and `/data/coolify`. Docker itself is removed too (its installer put it there).
 
 ```bash
 sudo vps-setup --down-vps-coolify
