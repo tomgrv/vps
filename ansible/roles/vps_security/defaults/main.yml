@@ -1,6 +1,6 @@
 ---
 vps_ssh_port: 22
-vps_ssh_unit: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
+vps_ssh_unit: "{{ 'ssh' if ansible_facts['os_family'] == 'Debian' else 'sshd' }}"
 
 # Optional non-root sudo user and the key authorized for it. Was SYSTEM_ADMIN_USER / SYSTEM_ADMIN_SSH_KEY.
 vps_admin_user: "{{ lookup('env', 'SYSTEM_ADMIN_USER') }}"

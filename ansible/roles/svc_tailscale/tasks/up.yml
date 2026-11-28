@@ -1,6 +1,6 @@
 ---
 - name: Install Tailscale from its apt repository
-  when: ansible_os_family == 'Debian'
+  when: ansible_facts['os_family'] == 'Debian'
   block:
     - name: Install python3-debian (for deb822_repository)
       ansible.builtin.apt:
@@ -10,10 +10,10 @@
       ansible.builtin.deb822_repository:
         name: tailscale
         types: deb
-        uris: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}"
-        suites: "{{ ansible_distribution_release }}"
+        uris: "https://pkgs.tailscale.com/stable/{{ ansible_facts['distribution'] | lower }}"
+        suites: "{{ ansible_facts['distribution_release'] }}"
         components: main
-        signed_by: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
+        signed_by: "https://pkgs.tailscale.com/stable/{{ ansible_facts['distribution'] | lower }}/{{ ansible_facts['distribution_release'] }}.noarmor.gpg"
     - name: Install the package
       ansible.builtin.apt:
         name: tailscale
@@ -22,7 +22,7 @@
 
 # shortcut: the official installer (unpinned, run as root) off Debian, add per-family repos when needed
 - name: Install Tailscale with the official installer
-  when: ansible_os_family != 'Debian'
+  when: ansible_facts['os_family'] != 'Debian'
   block:
     - name: Download the installer
       ansible.builtin.get_url:

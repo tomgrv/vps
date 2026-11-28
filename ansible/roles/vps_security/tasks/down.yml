@@ -35,14 +35,14 @@
 - name: Disable ufw
   community.general.ufw:
     state: disabled
-  when: ansible_os_family == 'Debian'
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Stop firewalld
   ansible.builtin.service:
     name: firewalld
     state: stopped
     enabled: false
-  when: ansible_os_family != 'Debian'
+  when: ansible_facts['os_family'] != 'Debian'
 
 - name: Forget the recorded rules
   ansible.builtin.file:

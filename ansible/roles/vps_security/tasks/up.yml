@@ -1,16 +1,22 @@
 ---
+- name: Refresh the package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_facts['os_family'] == 'Debian'
+
 - name: Install the firewall, fail2ban and the guard's tools
   ansible.builtin.package:
     name: "{{ item.name }}"
     state: present
   loop:
-    - {name: "{{ 'ufw' if ansible_os_family == 'Debian' else 'firewalld' }}"}
+    - {name: "{{ 'ufw' if ansible_facts['os_family'] == 'Debian' else 'firewalld' }}"}
     - {name: fail2ban}
     - {name: iptables}
-    - {name: "{{ 'iproute' if ansible_os_family == 'RedHat' else 'iproute2' }}"}
+    - {name: "{{ 'iproute' if ansible_facts['os_family'] == 'RedHat' else 'iproute2' }}"}
   register: vps_security_pkgs
   # fail2ban is not in every distribution's repositories (Amazon Linux): optional there.
-  ignore_errors: "{{ item.name == 'fail2ban' and ansible_os_family != 'Debian' }}"
+  ignore_errors: "{{ item.name == 'fail2ban' and ansible_facts['os_family'] != 'Debian' }}"
 
 - name: Find existing authorized keys
   ansible.builtin.find:
@@ -52,7 +58,7 @@
       ansible.builtin.user:
         name: "{{ vps_admin_user }}"
         shell: /bin/bash
-        groups: "{{ 'sudo' if ansible_os_family == 'Debian' else 'wheel' }}"
+        groups: "{{ 'sudo' if ansible_facts['os_family'] == 'Debian' else 'wheel' }}"
         append: true
         create_home: true
       when: vps_admin_user | length > 0
@@ -98,7 +104,7 @@
       notify: Restart fail2ban
 
     - name: Firewall
-      ansible.builtin.include_tasks: "{{ 'ufw.yml' if ansible_os_family == 'Debian' else 'firewalld.yml' }}"
+      ansible.builtin.include_tasks: "{{ 'ufw.yml' if ansible_facts['os_family'] == 'Debian' else 'firewalld.yml' }}"
 
     - name: Apply the sshd change now
       ansible.builtin.meta: flush_handlers

@@ -8,4 +8,4 @@ svc_cloudflare_sha256: "{{ lookup('env', 'CLOUDFLARE_SHA256') }}"
 svc_cloudflare_iface: vpscf0
 svc_cloudflare_bin: /usr/local/bin/cloudflared
 svc_cloudflare_env_file: /etc/cloudflared/tunnel.env
-svc_cloudflare_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_architecture] | default(ansible_architecture) }}"
+svc_cloudflare_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts['architecture']] | default(ansible_facts['architecture']) }}"

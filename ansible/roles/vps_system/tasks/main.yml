@@ -6,12 +6,18 @@
       ansible.builtin.apt:
         upgrade: dist
         update_cache: true
-      when: ansible_os_family == 'Debian'
+      when: ansible_facts['os_family'] == 'Debian'
     - name: Upgrade (dnf/zypper)
       ansible.builtin.package:
         name: "*"
         state: latest  # noqa package-latest
-      when: ansible_os_family != 'Debian'
+      when: ansible_facts['os_family'] != 'Debian'
+
+- name: Refresh the package cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_facts['os_family'] == 'Debian'
 
 - name: Install base utilities
   ansible.builtin.package:
@@ -19,7 +25,7 @@
     state: present
 
 - name: Unattended security upgrades (apt)
-  when: ansible_os_family == 'Debian'
+  when: ansible_facts['os_family'] == 'Debian'
   block:
     - name: Install unattended-upgrades
       ansible.builtin.apt:
@@ -41,7 +47,7 @@
         mode: "0644"
 
 - name: Unattended security upgrades (dnf)
-  when: ansible_os_family == 'RedHat'
+  when: ansible_facts['os_family'] == 'RedHat'
   block:
     - name: Install dnf-automatic
       ansible.builtin.dnf:
@@ -62,7 +68,7 @@
 - name: No unattended upgrades on this distribution
   ansible.builtin.debug:
     msg: "Run 'zypper patch' on your own schedule."
-  when: ansible_os_family not in ['Debian', 'RedHat']
+  when: ansible_facts['os_family'] not in ['Debian', 'RedHat']
 
 - name: Set timezone
   when: vps_system_tz | length > 0

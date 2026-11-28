@@ -1,8 +1,7 @@
 ---
 dependency:
-  name: galaxy
-  options:
-    requirements-file: requirements.yml
+  name: shell
+  command: "true"
 driver:
   name: docker
 platforms:
@@ -24,5 +23,7 @@ provisioner:
         # Only the host steps that run in a container.
         vps_skip: [svc-tailscale, svc-cockpit]
         vps_system_upgrade: false
+        # The container user is root: sudo's PAM stack fails in systemd containers.
+        ansible_become: false
 verifier:
   name: ansible
